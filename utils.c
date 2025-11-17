@@ -167,13 +167,6 @@ void help() {
     printf("22. LOOP - Loop current song indefinitely\n");
     printf("23. LOG - Display command history\n");
     printf("24. EXIT - Exit the program\n\n");
-    printf("NOTE: You can use song/album names OR their position numbers!\n");
-    printf("      Examples:\n");
-    printf("        NEXT SONG 1 5 3    (adds songs at positions 1, 5, 3)\n");
-    printf("        NEXT SONG Yesterday  (adds song by name)\n");
-    printf("        NEXT ALBUM 2         (adds album at position 2)\n");
-    printf("      When multiple songs/albums have the same name,\n");
-    printf("      you'll be prompted to choose which one.\n\n");
 }
 
 void handleHelp(Command *cmd) {
