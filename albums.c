@@ -10,14 +10,11 @@
 Album *g_albums = NULL;
 int g_next_album_id = 1;
 
-// ========== HELPER FUNCTIONS ==========
-
 int iequals(const char *a, const char *b) {
     if (!a || !b) return 0;
     return strcasecmp(a, b) == 0;
 }
 
-// Find all albums with matching name
 Album** find_all_albums_by_name(const char *name, int *count) {
     if (!name || !count) return NULL;
     
@@ -41,22 +38,15 @@ Album** find_all_albums_by_name(const char *name, int *count) {
     return matches;
 }
 
-// Find album by number (position in list)
-Album* find_album_by_number(int number) {
-    if (number < 1) return NULL;
-    
-    int count = 0;
+Album* find_album_by_id(int id) {
     for (Album *a = g_albums; a; a = a->next) {
-        count++;
-        if (count == number) {
+        if (a->album_id == id) {
             return a;
         }
     }
-    
     return NULL;
 }
 
-// Check if string is a number
 int is_number_album(const char *str) {
     if (!str || *str == '\0') return 0;
     
@@ -68,24 +58,21 @@ int is_number_album(const char *str) {
     return 1;
 }
 
-// Interactive album selection (supports both name and number)
 Album* find_album_interactive(const char *name) {
     if (!name) return NULL;
     
-    // Check if input is a number
     if (is_number_album(name)) {
-        int num = atoi(name);
-        Album *a = find_album_by_number(num);
+        int id = atoi(name);
+        Album *a = find_album_by_id(id);
         if (a) {
             printf("Selected album: %s\n", a->name);
             return a;
         } else {
-            printf("No album at position %d\n", num);
+            printf("No album with ID %d\n", id);
             return NULL;
         }
     }
     
-    // Otherwise search by name
     int count;
     Album **matches = find_all_albums_by_name(name, &count);
     
@@ -99,7 +86,6 @@ Album* find_album_interactive(const char *name) {
         return result;
     }
     
-    // Multiple matches - prompt user
     printf("\nMultiple albums found with name '%s':\n", name);
     for (int i = 0; i < count; i++) {
         int song_count = 0;
@@ -180,8 +166,6 @@ int album_append_song(Album *a, Song *s) {
     }
     return 0;
 }
-
-// ========== BINARY I/O ==========
 
 int load_album_from_bin_by_id(int album_id, Album **out) {
     if (!out) return -1;
@@ -306,29 +290,19 @@ void load_all_albums() {
     printf("Loaded %d albums.\n", count);
 }
 
-// ========== COMMAND IMPLEMENTATIONS ==========
-
 void listAlbums() {
-    printf("\n╔════════════════════════════════════════╗\n");
-    printf("║         ALBUMS                         ║\n");
-    printf("╚════════════════════════════════════════╝\n\n");
+    printf("\nALBUMS\n\n");
     
     if (!g_albums) {
         printf("No albums found.\n");
         return;
     }
     
-    int count = 0;
     for (Album *a = g_albums; a; a = a->next) {
-        count++;
         int song_count = 0;
         for (AlbumNode *n = a->head; n; n = n->next) song_count++;
         
-        printf("%d. %s (%d songs) [ID: %d]\n", count, a->name, song_count, a->album_id);
-    }
-    
-    if (count == 0) {
-        printf("No albums found.\n");
+        printf("%s (%d songs) [ID: %d]\n", a->name, song_count, a->album_id);
     }
 }
 
@@ -357,9 +331,7 @@ void listSongsInAlbum(const char *albumname) {
         return;
     }
     
-    printf("\n╔════════════════════════════════════════╗\n");
-    printf("║  Album: %-30s ║\n", a->name);
-    printf("╚════════════════════════════════════════╝\n\n");
+    printf("\nAlbum: %s\n\n", a->name);
     
     int idx = 1;
     for (AlbumNode *n = a->head; n; n = n->next, ++idx) {
@@ -490,6 +462,7 @@ void handleManageAddSong(Command *cmd) {
     }
     manageAddSong(cmd->tokens[2], cmd->tokens[3]);
 }
+
 void manageSwapSongs(const char *albumname, const char *song1, const char *song2) {
     if (!albumname || !song1 || !song2) {
         fprintf(stderr, "manageSwapSongs: NULL argument\n");
@@ -651,7 +624,6 @@ void deleteAlbum(const char *albumname) {
     char filepath[512];
     snprintf(filepath, sizeof(filepath), "utils/albums/%s_%d.bin", a->name, a->album_id);
     
-    // Remove from linked list
     if (a->prev) {
         a->prev->next = a->next;
     } else {
@@ -662,7 +634,6 @@ void deleteAlbum(const char *albumname) {
         a->next->prev = a->prev;
     }
     
-    // Free album nodes
     AlbumNode *node = a->head;
     while (node) {
         AlbumNode *next = node->next;

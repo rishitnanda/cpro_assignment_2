@@ -130,14 +130,12 @@ void dispatchCommand(Command *cmd) {
         }
     }
     
-    printf("\n✗ Unknown command: %s\n", cmd->tokens[0]);
+    printf("\nX Unknown command: %s\n", cmd->tokens[0]);
     printf("  Type 'HELP' for available commands.\n");
 }
 
 void help() {
-    printf("\n╔════════════════════════════════════════════════════════════════╗\n");
-    printf("║                    AVAILABLE COMMANDS                          ║\n");
-    printf("╚════════════════════════════════════════════════════════════════╝\n\n");
+    printf("\nAVAILABLE COMMANDS\n\n");
     printf("1. HELP - Display this help message\n");
     printf("2. LOAD - Add a new song into library\n");
     printf("3. LIST SONGS - List all songs in library\n");
@@ -145,18 +143,18 @@ void help() {
     printf("5. LIST IN ALBUM <albumname> - List all songs in an album\n");
     printf("6. LIST PLAYLIST - List all songs in current playlist\n");
     printf("7. CREATE <albumname> <song1> <song2>... - Create a new album\n");
-    printf("   (songs can be song names or numbers from LIST SONGS)\n");
+    printf("   (songs can be song IDs or names)\n");
     printf("8. MANAGE ADD <albumname> <song> - Add a song to an album\n");
-    printf("   (album/song can be name or number)\n");
+    printf("   (album/song can be ID or name)\n");
     printf("9. MANAGE SWAP <albumname> <song1> <song2> - Swap two songs\n");
     printf("10. MANAGE MOVE <albumname> <song> <position> - Move a song\n");
     printf("11. MANAGE DELETE <albumname> <song> - Delete a song from album\n");
     printf("12. DELETE ALBUM <albumname> - Delete an album\n");
-    printf("   (album can be name or number from LIST ALBUMS)\n");
+    printf("   (album can be ID or name)\n");
     printf("13. NEXT SONG <song1> <song2>... - Add songs after current\n");
-    printf("   (songs can be song names or numbers)\n");
+    printf("   (songs can be song IDs or names)\n");
     printf("14. NEXT ALBUM <albumname> - Add album after current\n");
-    printf("   (album can be name or number)\n");
+    printf("   (album can be ID or name)\n");
     printf("15. PAUSE - Pause playback\n");
     printf("16. RESUME - Resume playback\n");
     printf("17. FWD - Skip to next song\n");
@@ -181,9 +179,7 @@ void loadSong() {
     char title[256], artist[256], length_str[16];
     int year;
     
-    printf("\n╔════════════════════════════════════════╗\n");
-    printf("║         ADD NEW SONG                   ║\n");
-    printf("╚════════════════════════════════════════╝\n\n");
+    printf("\nADD NEW SONG\n\n");
 
     printf("Enter title: ");
     fgets(title, sizeof(title), stdin);
@@ -204,15 +200,15 @@ void loadSong() {
     Song *s = malloc(sizeof(Song));
     if (song_init(s, title, artist, length_str, year) == 0) {
         if (add_song_to_library(s) == 0) {
-            printf("\n✓ Added: %s - %s [ID: %d]\n", title, artist, s->song_id);
+            printf("\nOK Added: %s - %s [ID: %d]\n", title, artist, s->song_id);
         } else {
             song_free(s);
             free(s);
-            printf("\n✗ Failed to add song to library\n");
+            printf("\nX Failed to add song to library\n");
         }
     } else {
         free(s);
-        printf("\n✗ Invalid song format\n");
+        printf("\nX Invalid song format\n");
     }
 }
 
@@ -253,10 +249,8 @@ void playsong(const char *songname) {
     g_playback.is_playing = 0;
     g_playback.is_paused = 1;
     
-    printf("\n╔════════════════════════════════════════╗\n");
-    printf("║  PLAYING SINGLE SONG                   ║\n");
-    printf("╚════════════════════════════════════════╝\n");
-    printf("\nTitle:  %s\n", s->title);
+    printf("\nPLAYING SINGLE SONG\n\n");
+    printf("Title:  %s\n", s->title);
     printf("Artist: %s\n", s->artist);
     printf("Length: %02d:%02d:%02d\n", s->length.hh, s->length.mm, s->length.ss);
     printf("Year:   %d\n\n", s->year);
@@ -272,12 +266,12 @@ void playsong(const char *songname) {
         int total_seconds = length_to_seconds(&s->length);
         for (int i = 0; i <= total_seconds; i++) {
             printf("\r\033[K");
-            printf("⏸ [");
+            printf("|| [");
             int bar_width = 30;
             int filled = (total_seconds > 0) ? (i * bar_width / total_seconds) : 0;
             for (int j = 0; j < bar_width; j++) {
-                if (j < filled) printf("█");
-                else printf("░");
+                if (j < filled) printf("=");
+                else printf("-");
             }
             printf("] %02d:%02d:%02d / %02d:%02d:%02d",
                    i / 3600, (i % 3600) / 60, i % 60,
@@ -316,9 +310,7 @@ void handlePlay(Command *cmd) {
 }
 
 void listSongs() {
-    printf("\n╔════════════════════════════════════════╗\n");
-    printf("║         SONG LIBRARY                   ║\n");
-    printf("╚════════════════════════════════════════╝\n\n");
+    printf("\nSONG LIBRARY\n\n");
     
     if (!g_songs) {
         printf("Library is empty.\n");
@@ -329,8 +321,7 @@ void listSongs() {
     int count = 0;
     for (Song *s = g_songs; s; s = s->next) {
         count++;
-        printf("%d. %s - %s (%02d:%02d:%02d) [%d] [ID: %d]\n",
-               count,
+        printf("%s - %s (%02d:%02d:%02d) [%d] [ID: %d]\n",
                s->title ? s->title : "(untitled)",
                s->artist ? s->artist : "(unknown)",
                s->length.hh, s->length.mm, s->length.ss,
@@ -354,9 +345,7 @@ void showLog() {
     if (logFile != NULL) {
         char line[MAX_LINE];
         
-        printf("\n╔════════════════════════════════════════╗\n");
-        printf("║         COMMAND LOG                    ║\n");
-        printf("╚════════════════════════════════════════╝\n\n");
+        printf("\nCOMMAND LOG\n\n");
         
         int count = 0;
         while (fgets(line, sizeof(line), logFile)) {
@@ -382,13 +371,10 @@ void handleLog(Command *cmd) {
 }
 
 void exitProgram() {
-    printf("\n╔════════════════════════════════════════╗\n");
-    printf("║  Saving and exiting...                 ║\n");
-    printf("╚════════════════════════════════════════╝\n\n");
+    printf("\nSaving and exiting...\n\n");
     
     save_all_songs_to_bin();
     
-    // Save all albums
     for (Album *a = g_albums; a; a = a->next) {
         save_album_to_bin(a);
     }
