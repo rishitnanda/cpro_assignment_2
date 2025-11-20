@@ -22,9 +22,6 @@ volatile sig_atomic_t prev_requested = 0;
 volatile sig_atomic_t repeat_requested = 0;
 volatile sig_atomic_t loop_requested = 0;
 
-/* -----------------------
-   Helpers: length parse/format
-   ----------------------- */
 int parse_length(const char *s, SongLength *out) {
     if (!s || !out) return -1;
     int hh = 0, mm = 0, ss = 0;
@@ -48,9 +45,6 @@ long length_to_seconds(const SongLength *len) {
     return (long)len->hh * 3600L + len->mm * 60L + len->ss;
 }
 
-/* -----------------------
-   Song init/free/print
-   ----------------------- */
 int song_init(Song *s, const char *title, const char *artist, const char *length_str, int year) {
     if (!s || !title || !artist || !length_str) return -1;
     s->title = strdup(title);
@@ -84,26 +78,18 @@ void song_print(const Song *s) {
     if (!s) return;
     char buf[16];
     format_length(&s->length, buf, sizeof(buf));
-    /* As requested: Title — Artist — hh:mm:ss (no internal IDs printed) */
     printf("  %s — %s — %s\n",
            s->title ? s->title : "(untitled)",
            s->artist ? s->artist : "(unknown)",
            buf);
 }
 
-/* -----------------------
-   Access by title / index
-   ----------------------- */
-
-/* Return number of songs in library (used for indexing) */
 static int get_song_count() {
     int count = 0;
     for (Song *s = g_songs; s; s = s->next) count++;
     return count;
 }
 
-/* Get the N-th song (1-based) in the library list order printed by LIST SONGS.
-   Returns NULL if out of range. */
 Song* find_song_by_number(int number) {
     if (number <= 0) return NULL;
     int idx = 1;
@@ -113,7 +99,6 @@ Song* find_song_by_number(int number) {
     return NULL;
 }
 
-/* Case-insensitive title matches (may return multiple results) */
 Song** find_all_songs_by_title(const char *title, int *count) {
     if (!title || !count) return NULL;
 
@@ -142,7 +127,6 @@ Song** find_all_songs_by_title(const char *title, int *count) {
     return matches;
 }
 
-/* Find by internal song_id (kept for album load/save, but never shown to user) */
 Song* find_song_by_id(int id) {
     for (Song *s = g_songs; s; s = s->next) {
         if (s->song_id == id) return s;
@@ -150,7 +134,6 @@ Song* find_song_by_id(int id) {
     return NULL;
 }
 
-/* Utility: check if token is a number (all digits) */
 int is_number(const char *str) {
     if (!str || *str == '\0') return 0;
     for (int i = 0; str[i]; i++) {
@@ -159,14 +142,9 @@ int is_number(const char *str) {
     return 1;
 }
 
-/* Interactive finder used by commands:
-   - If token is numeric → interpret as list serial number (1-based)
-   - Else → try exact title matches; if multiple matches prompt user to choose from a numbered list (disambiguation uses the same 1..N local numbering)
-*/
 Song* find_song_by_title_interactive(const char *title) {
     if (!title) return NULL;
 
-    /* If user provided a number, treat it as the list index (1-based) */
     if (is_number(title)) {
         int index = atoi(title);
         Song *s = find_song_by_number(index);
@@ -179,7 +157,6 @@ Song* find_song_by_title_interactive(const char *title) {
         }
     }
 
-    /* Non-numeric: find matching titles */
     int count = 0;
     Song **matches = find_all_songs_by_title(title, &count);
     if (!matches || count == 0) {
@@ -192,9 +169,6 @@ Song* find_song_by_title_interactive(const char *title) {
         return result;
     }
 
-    /* Multiple matches — present a numbered list for disambiguation.
-       Numbering here is local to the match list (1..count). The user will select
-       from this small list (not the global library index). */
     printf("\nMultiple songs found with title '%s':\n", title);
     for (int i = 0; i < count; i++) {
         char buf[16];
@@ -221,9 +195,6 @@ Song* find_song_by_title_interactive(const char *title) {
     return result;
 }
 
-/* -----------------------
-   Binary I/O for songs
-   ----------------------- */
 int load_all_songs_from_bin() {
     FILE *fp = fopen("utils/songs.bin", "rb");
     if (!fp) {
@@ -332,9 +303,6 @@ int add_song_to_library(Song *s) {
     return 0;
 }
 
-/* -----------------------
-   Signals: mark actions
-   ----------------------- */
 void handle_pause_signal(int sig) { pause_requested = 1; }
 void handle_resume_signal(int sig) { resume_requested = 1; }
 void handle_next_signal(int sig) { next_requested = 1; }
@@ -342,9 +310,6 @@ void handle_prev_signal(int sig) { prev_requested = 1; }
 void handle_repeat_signal(int sig) { repeat_requested = 1; }
 void handle_loop_signal(int sig) { loop_requested = 1; }
 
-/* -----------------------
-   Playback state and loop
-   ----------------------- */
 void init_playback_state() {
     memset(&g_playback, 0, sizeof(PlaybackState));
     g_playback.playback_pid = -1;
@@ -548,9 +513,6 @@ void stop_playback_process() {
     }
 }
 
-/* -----------------------
-   Playlist display (LIST PLAYLIST)
-   ----------------------- */
 void listPlaylist() {
     printf("\nPLAYLIST\n\n");
 
@@ -588,9 +550,6 @@ void handleListPlaylist(Command *cmd) {
     listPlaylist();
 }
 
-/* -----------------------
-   NEXT SONG(s)
-   ----------------------- */
 void nextSongs(const char *songs[], int count) {
     if (!songs || count <= 0) {
         printf("No songs specified.\n");
@@ -628,7 +587,6 @@ void nextSongs(const char *songs[], int count) {
     if (found_count > 0) {
         Song **found_songs = malloc(found_count * sizeof(Song*));
         if (!found_songs) {
-            /* free nodes */
             SongListNode *c = head;
             while (c) { SongListNode *n = c->next; free(c); c = n; }
             printf("Memory error\n");
@@ -688,9 +646,6 @@ void handleNextSongs(Command *cmd) {
     free(songs);
 }
 
-/* -----------------------
-   NEXT ALBUM
-   ----------------------- */
 void nextAlbum(const char *albumname) {
     if (!albumname) {
         printf("No album specified.\n");
@@ -738,9 +693,6 @@ void handleNextAlbum(Command *cmd) {
     nextAlbum(cmd->tokens[2]);
 }
 
-/* -----------------------
-   Pause / Resume / Fwd / Prev / Repeat / Loop / Shuffle / Remove
-   ----------------------- */
 void pausePlayback() {
     if (!g_playback.is_playing) { printf("\nNo song is currently playing.\n"); return; }
     if (g_playback.is_paused) { printf("\nPlayback is already paused.\n"); return; }

@@ -10,13 +10,11 @@
 Album *g_albums = NULL;
 int g_next_album_id = 1;
 
-/* Case-insensitive equals */
 int iequals(const char *a, const char *b) {
     if (!a || !b) return 0;
     return strcasecmp(a, b) == 0;
 }
 
-/* --- Helper: find song in library by 1-based list index (as printed by LIST SONGS) --- */
 static Song* find_song_in_library_by_index(int index) {
     if (index < 1) return NULL;
     int idx = 1;
@@ -27,7 +25,6 @@ static Song* find_song_in_library_by_index(int index) {
     return NULL;
 }
 
-/* --- Helper: return album node at 1-based position in album --- */
 static AlbumNode* album_node_at_index(Album *a, int index, AlbumNode **prev_out) {
     if (!a || index < 1) return NULL;
     AlbumNode *prev = NULL;
@@ -42,7 +39,6 @@ static AlbumNode* album_node_at_index(Album *a, int index, AlbumNode **prev_out)
     return cur;
 }
 
-/* find all albums by name (existing behaviour) */
 Album** find_all_albums_by_name(const char *name, int *count) {
     if (!name || !count) return NULL;
     
@@ -66,7 +62,6 @@ Album** find_all_albums_by_name(const char *name, int *count) {
     return matches;
 }
 
-/* find album by its stored album_id (internal) */
 Album* find_album_by_id(int id) {
     for (Album *a = g_albums; a; a = a->next) {
         if (a->album_id == id) {
@@ -76,7 +71,6 @@ Album* find_album_by_id(int id) {
     return NULL;
 }
 
-/* is numeric string */
 int is_number_album(const char *str) {
     if (!str || *str == '\0') return 0;
     for (int i = 0; str[i]; i++) {
@@ -85,10 +79,6 @@ int is_number_album(const char *str) {
     return 1;
 }
 
-/* find album by interactive input:
-   - if numeric -> treat as list index shown by LIST ALBUMS (1-based)
-   - otherwise treat as album name with disambiguation
-*/
 Album* find_album_interactive(const char *input) {
     if (!input) return NULL;
 
@@ -142,7 +132,6 @@ Album* find_album_interactive(const char *input) {
     return result;
 }
 
-/* create album node and link into global list */
 Album* create_album_internal(const char *name) {
     if (!name) return NULL;
     Album *a = (Album*)malloc(sizeof(Album));
@@ -165,7 +154,6 @@ Album* create_album_internal(const char *name) {
     return a;
 }
 
-/* find node by title (existing) */
 AlbumNode* album_find_node(Album *a, const char *title, AlbumNode **prev_out) {
     if (!a || !title) return NULL;
     AlbumNode *prev = NULL;
@@ -178,7 +166,6 @@ AlbumNode* album_find_node(Album *a, const char *title, AlbumNode **prev_out) {
     return NULL;
 }
 
-/* append song to album (existing) */
 int album_append_song(Album *a, Song *s) {
     if (!a || !s) return -1;
     AlbumNode *node = (AlbumNode*)malloc(sizeof(AlbumNode));
@@ -194,7 +181,6 @@ int album_append_song(Album *a, Song *s) {
     return 0;
 }
 
-/* load album by id (existing) */
 int load_album_from_bin_by_id(int album_id, Album **out) {
     if (!out) return -1;
     for (Album *a = g_albums; a; a = a->next) {
@@ -206,7 +192,6 @@ int load_album_from_bin_by_id(int album_id, Album **out) {
     return -1;
 }
 
-/* save album (existing) */
 int save_album_to_bin(const Album *a) {
     if (!a || !a->name) return -1;
     char filepath[512];
@@ -229,7 +214,6 @@ int save_album_to_bin(const Album *a) {
     return 0;
 }
 
-/* load all albums from utils/albums/ (existing, unchanged) */
 void load_all_albums() {
     DIR *d = opendir("utils/albums/");
     if (!d) {
@@ -307,7 +291,6 @@ void load_all_albums() {
     printf("Loaded %d albums.\n", count);
 }
 
-/* --- LIST ALBUMS: print only index and name (option A) --- */
 void listAlbums() {
     printf("\nALBUMS\n\n");
     if (!g_albums) {
@@ -328,7 +311,6 @@ void handleListAlbums(Command *cmd) {
     listAlbums();
 }
 
-/* --- LIST SONGS IN ALBUM: show index + title + artist + duration (option 3) --- */
 void listSongsInAlbum(const char *albumname) {
     if (!albumname) {
         fprintf(stderr, "listSongsInAlbum: albumname is NULL\n");
@@ -371,11 +353,6 @@ void handleListSongsInAlbum(Command *cmd) {
     listSongsInAlbum(cmd->tokens[3]);
 }
 
-/* --- Helper: resolve a song token for CREATE ---
-   Token can be:
-     - numeric string -> treat as library list index (1-based)
-     - otherwise -> treat as title and use find_song_by_title_interactive
-*/
 static Song* resolve_library_song_token(const char *token) {
     if (!token) return NULL;
     if (is_number(token)) {
@@ -385,7 +362,6 @@ static Song* resolve_library_song_token(const char *token) {
     return find_song_by_title_interactive(token);
 }
 
-/* CREATE album with song tokens that may be numbers (library index) or names */
 void createAlbum(const char *albumname, const char *songs[], int count) {
     if (!albumname) {
         fprintf(stderr, "createAlbum: albumname is NULL\n");
@@ -447,11 +423,6 @@ void handleCreateAlbum(Command *cmd) {
     free(songs);
 }
 
-/* --- Helper: resolve a reference to a song within an album ---
-   token may be:
-    - numeric -> position inside album (1-based) -> returns node
-    - string -> title -> album_find_node
-*/
 static AlbumNode* resolve_album_song_token(Album *a, const char *token, AlbumNode **prev_out) {
     if (!a || !token) return NULL;
     if (is_number(token)) {
@@ -461,7 +432,6 @@ static AlbumNode* resolve_album_song_token(Album *a, const char *token, AlbumNod
     return album_find_node(a, token, prev_out);
 }
 
-/* MANAGE ADD: add song to album. For song token, accept library index or title */
 void manageAddSong(const char *albumname, const char *songname) {
     if (!albumname || !songname) {
         fprintf(stderr, "manageAddSong: NULL argument\n");
@@ -507,7 +477,6 @@ void handleManageAddSong(Command *cmd) {
     manageAddSong(cmd->tokens[2], cmd->tokens[3]);
 }
 
-/* MANAGE SWAP: tokens for songs may be album-local positions or titles */
 void manageSwapSongs(const char *albumname, const char *song1, const char *song2) {
     if (!albumname || !song1 || !song2) {
         fprintf(stderr, "manageSwapSongs: NULL argument\n");
@@ -568,7 +537,6 @@ void handleManageSwapSongs(Command *cmd) {
     manageSwapSongs(cmd->tokens[2], cmd->tokens[3], cmd->tokens[4]);
 }
 
-/* MANAGE MOVE: songname may be album-local index or title, position is target 1-based */
 void manageMoveSong(const char *albumname, const char *songname, int position) {
     if (!albumname || !songname) {
         fprintf(stderr, "manageMoveSong: NULL argument\n");
@@ -589,12 +557,10 @@ void manageMoveSong(const char *albumname, const char *songname, int position) {
         return;
     }
 
-    /* detach node */
     if (!prev) a->head = node->next;
     else prev->next = node->next;
     node->next = NULL;
 
-    /* insert at position */
     if (position == 1 || !a->head) {
         node->next = a->head;
         a->head = node;
@@ -622,7 +588,6 @@ void handleManageMoveSong(Command *cmd) {
     manageMoveSong(cmd->tokens[2], cmd->tokens[3], position);
 }
 
-/* MANAGE DELETE: songname may be album-local index or title */
 void manageDeleteSong(const char *albumname, const char *songname) {
     if (!albumname || !songname) {
         fprintf(stderr, "manageDeleteSong: NULL argument\n");
@@ -658,7 +623,6 @@ void handleManageDeleteSong(Command *cmd) {
     manageDeleteSong(cmd->tokens[2], cmd->tokens[3]);
 }
 
-/* DELETE album (existing) */
 void deleteAlbum(const char *albumname) {
     if (!albumname) {
         fprintf(stderr, "deleteAlbum: NULL argument\n");

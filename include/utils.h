@@ -12,8 +12,6 @@ Command parseCommand(char *line);
 void freeCommand(Command *cmd);
 int matchCommand(Command *cmd, CommandDef *def);
 void dispatchCommand(Command *cmd);
-
-// Command handlers
 void help();
 void handleHelp(Command *cmd);
 void loadSong();

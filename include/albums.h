@@ -4,11 +4,9 @@
 #include "structures.h"
 #include "songs.h"
 
-// Global variable
 extern Album *g_albums;
 extern int g_next_album_id;
 
-// Helper functions
 int iequals(const char *a, const char *b);
 Album* find_album_interactive(const char *name);
 Album** find_all_albums_by_name(const char *name, int *count);
@@ -18,12 +16,10 @@ Album* create_album_internal(const char *name);
 AlbumNode* album_find_node(Album *a, const char *title, AlbumNode **prev_out);
 int album_append_song(Album *a, Song *s);
 
-// Binary I/O
 int load_album_from_bin_by_id(int album_id, Album **out);
 int save_album_to_bin(const Album *a);
 void load_all_albums();
 
-// Command implementations
 void listAlbums();
 void handleListAlbums(Command *cmd);
 void listSongsInAlbum(const char *albumname);
