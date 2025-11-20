@@ -200,7 +200,7 @@ void loadSong() {
     Song *s = malloc(sizeof(Song));
     if (song_init(s, title, artist, length_str, year) == 0) {
         if (add_song_to_library(s) == 0) {
-            printf("\n✓ Added: %s - %s [ID: %d]\n", title, artist, s->song_id);
+            printf("\n✓ Added: %s - %s\n", title, artist);
         } else {
             song_free(s);
             free(s);
@@ -310,28 +310,33 @@ void handlePlay(Command *cmd) {
 }
 
 void listSongs() {
-    printf("\nSONG LIBRARY\n\n");
-    
+    printf("\nALL SONGS:\n");
     if (!g_songs) {
-        printf("Library is empty.\n");
-        printf("Use 'LOAD' to add songs.\n");
+        printf("No songs found.\n\n");
         return;
     }
-    
-    int count = 0;
-    for (Song *s = g_songs; s; s = s->next) {
-        count++;
-        printf("%d. %s - %s (%02d:%02d:%02d) [%d] [ID: %d]\n",
-               count,
-               s->title ? s->title : "(untitled)",
-               s->artist ? s->artist : "(unknown)",
-               s->length.hh, s->length.mm, s->length.ss,
-               s->year,
-               s->song_id);
+
+    Song *current = g_songs;
+    int number = 1;
+
+    while (current) {
+        char lenbuf[32];
+        format_length(&current->length, lenbuf, sizeof(lenbuf));
+
+        printf("%d. %s - %s (%s, %d)\n",
+               number,
+               current->title,
+               current->artist,
+               lenbuf,
+               current->year);
+
+        current = current->next;
+        number++;
     }
-    
-    printf("\nTotal songs: %d\n", count);
+
+    printf("\n");
 }
+
 
 void handleListSongs(Command *cmd) {
     if (cmd->count != 2) {

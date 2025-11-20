@@ -14,9 +14,9 @@ typedef struct Song {
     char *artist;
     SongLength length;
     int year;
-    int song_id;  // Unique identifier
+    int song_id;
     struct Song *next;
-    struct Song *prev;  // For doubly linked list
+    struct Song *prev;
 } Song;
 
 typedef struct PlaylistNode {

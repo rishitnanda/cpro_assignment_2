@@ -1,10 +1,9 @@
 CC = gcc
 CFLAGS = -I./include -Wall
-LDFLAGS = 
 
 SOURCES = main.c songs.c albums.c utils.c
 OBJECTS = $(SOURCES:.c=.o)
-TARGET = music_player
+TARGET = c_unplugged
 
 all: $(TARGET)
 
