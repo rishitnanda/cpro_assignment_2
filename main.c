@@ -17,7 +17,7 @@ void logCommandToFile(const char *command) {
 int main() {
     char line[MAX_LINE];
     
-    printf("MUSIC PLAYLIST MANAGER\n\n");
+    printf("C-Unplugged\n\n");
     
     init_playback_state();
     
@@ -27,7 +27,7 @@ int main() {
     printf("Loading albums...\n");
     load_all_albums();
     
-    printf("\nType 'HELP' for available commands.\n");
+    printf("\nType 'HELP' or '1' for available commands.\n");
     printf("TIP: Use song/album IDs OR names in commands!\n\n");
     
     while (1) {

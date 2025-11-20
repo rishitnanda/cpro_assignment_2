@@ -84,6 +84,61 @@ CommandDef commands[] = {
     {NULL, NULL, 0, 0, 0, NULL}
 };
 
+// Check if the input is a number
+int isNumericCommand(const char *str) {
+    if (!str || *str == '\0') return 0;
+    for (int i = 0; str[i]; i++) {
+        if (str[i] < '0' || str[i] > '9') return 0;
+    }
+    return 1;
+}
+
+// Get command definition by number
+CommandDef* getCommandByNumber(int num) {
+    int count = 0;
+    for (int i = 0; commands[i].name != NULL; i++) {
+        count++;
+        if (count == num) {
+            return &commands[i];
+        }
+    }
+    return NULL;
+}
+
+// Convert command number to actual command tokens
+Command convertNumberToCommand(int cmdNum, Command *originalCmd) {
+    Command newCmd;
+    newCmd.tokens = (char**)malloc(MAX_TOKENS * sizeof(char*));
+    newCmd.count = 0;
+    
+    CommandDef *def = getCommandByNumber(cmdNum);
+    if (!def) {
+        printf("\n✗ Invalid command number: %d\n", cmdNum);
+        printf("  Type 'HELP' to see valid command numbers (1-24).\n");
+        return newCmd;
+    }
+    
+    // Parse the full command name and add tokens
+    char full_copy[256];
+    strncpy(full_copy, def->full_name, 255);
+    full_copy[255] = '\0';
+    
+    char *word = strtok(full_copy, " ");
+    while (word != NULL && newCmd.count < MAX_TOKENS) {
+        newCmd.tokens[newCmd.count] = strdup(word);
+        newCmd.count++;
+        word = strtok(NULL, " ");
+    }
+    
+    // Copy remaining arguments from original command (skip the number itself)
+    for (int i = 1; i < originalCmd->count && newCmd.count < MAX_TOKENS; i++) {
+        newCmd.tokens[newCmd.count] = strdup(originalCmd->tokens[i]);
+        newCmd.count++;
+    }
+    
+    return newCmd;
+}
+
 int matchCommand(Command *cmd, CommandDef *def) {
     if (cmd->count == 0) return 0;
     
@@ -123,6 +178,26 @@ int matchCommand(Command *cmd, CommandDef *def) {
 void dispatchCommand(Command *cmd) {
     if (cmd->count == 0) return;
     
+    // Check if first token is a number
+    if (isNumericCommand(cmd->tokens[0])) {
+        int cmdNum = atoi(cmd->tokens[0]);
+        Command newCmd = convertNumberToCommand(cmdNum, cmd);
+        
+        if (newCmd.count > 0) {
+            // Dispatch the converted command
+            for (int i = 0; commands[i].name != NULL; i++) {
+                if (matchCommand(&newCmd, &commands[i])) {
+                    commands[i].handler(&newCmd);
+                    freeCommand(&newCmd);
+                    return;
+                }
+            }
+        }
+        freeCommand(&newCmd);
+        return;
+    }
+    
+    // Normal command dispatch
     for (int i = 0; commands[i].name != NULL; i++) {
         if (matchCommand(cmd, &commands[i])) {
             commands[i].handler(cmd);
@@ -131,11 +206,13 @@ void dispatchCommand(Command *cmd) {
     }
     
     printf("\n✗ Unknown command: %s\n", cmd->tokens[0]);
-    printf("  Type 'HELP' for available commands.\n");
+    printf("  Type 'HELP' (or just '1') for available commands.\n");
+    printf("  For every command/album/song name, you can alternatively use its serial number.\n");
 }
 
 void help() {
-    printf("\nAVAILABLE COMMANDS\n\n");
+    printf("\nAVAILABLE COMMANDS\n");
+    printf("(Type the command name OR its number)\n\n");
     printf("1. HELP - Display this help message\n");
     printf("2. LOAD - Add a new song into library\n");
     printf("3. LIST SONGS - List all songs in library\n");
@@ -143,18 +220,13 @@ void help() {
     printf("5. LIST IN ALBUM <albumname> - List all songs in an album\n");
     printf("6. LIST PLAYLIST - List all songs in current playlist\n");
     printf("7. CREATE <albumname> <song1> <song2>... - Create a new album\n");
-    printf("   (songs can be song IDs or names)\n");
     printf("8. MANAGE ADD <albumname> <song> - Add a song to an album\n");
-    printf("   (album/song can be ID or name)\n");
     printf("9. MANAGE SWAP <albumname> <song1> <song2> - Swap two songs\n");
     printf("10. MANAGE MOVE <albumname> <song> <position> - Move a song\n");
     printf("11. MANAGE DELETE <albumname> <song> - Delete a song from album\n");
     printf("12. DELETE ALBUM <albumname> - Delete an album\n");
-    printf("   (album can be ID or name)\n");
     printf("13. NEXT SONG <song1> <song2>... - Add songs after current\n");
-    printf("   (songs can be song IDs or names)\n");
     printf("14. NEXT ALBUM <albumname> - Add album after current\n");
-    printf("   (album can be ID or name)\n");
     printf("15. PAUSE - Pause playback\n");
     printf("16. RESUME - Resume playback\n");
     printf("17. FWD - Skip to next song\n");

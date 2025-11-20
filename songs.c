@@ -84,12 +84,6 @@ void song_print(const Song *s) {
            buf);
 }
 
-static int get_song_count() {
-    int count = 0;
-    for (Song *s = g_songs; s; s = s->next) count++;
-    return count;
-}
-
 Song* find_song_by_number(int number) {
     if (number <= 0) return NULL;
     int idx = 1;
