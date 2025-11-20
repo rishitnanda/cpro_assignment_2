@@ -130,7 +130,7 @@ void dispatchCommand(Command *cmd) {
         }
     }
     
-    printf("\nX Unknown command: %s\n", cmd->tokens[0]);
+    printf("\n✗ Unknown command: %s\n", cmd->tokens[0]);
     printf("  Type 'HELP' for available commands.\n");
 }
 
@@ -200,15 +200,15 @@ void loadSong() {
     Song *s = malloc(sizeof(Song));
     if (song_init(s, title, artist, length_str, year) == 0) {
         if (add_song_to_library(s) == 0) {
-            printf("\nOK Added: %s - %s [ID: %d]\n", title, artist, s->song_id);
+            printf("\n✓ Added: %s - %s [ID: %d]\n", title, artist, s->song_id);
         } else {
             song_free(s);
             free(s);
-            printf("\nX Failed to add song to library\n");
+            printf("\n✗ Failed to add song to library\n");
         }
     } else {
         free(s);
-        printf("\nX Invalid song format\n");
+        printf("\n✗ Invalid song format\n");
     }
 }
 
@@ -266,12 +266,12 @@ void playsong(const char *songname) {
         int total_seconds = length_to_seconds(&s->length);
         for (int i = 0; i <= total_seconds; i++) {
             printf("\r\033[K");
-            printf("|| [");
+            printf("⏸ [");
             int bar_width = 30;
             int filled = (total_seconds > 0) ? (i * bar_width / total_seconds) : 0;
             for (int j = 0; j < bar_width; j++) {
-                if (j < filled) printf("=");
-                else printf("-");
+                if (j < filled) printf("█");
+                else printf("░");
             }
             printf("] %02d:%02d:%02d / %02d:%02d:%02d",
                    i / 3600, (i % 3600) / 60, i % 60,
@@ -321,7 +321,8 @@ void listSongs() {
     int count = 0;
     for (Song *s = g_songs; s; s = s->next) {
         count++;
-        printf("%s - %s (%02d:%02d:%02d) [%d] [ID: %d]\n",
+        printf("%d. %s - %s (%02d:%02d:%02d) [%d] [ID: %d]\n",
+               count,
                s->title ? s->title : "(untitled)",
                s->artist ? s->artist : "(unknown)",
                s->length.hh, s->length.mm, s->length.ss,

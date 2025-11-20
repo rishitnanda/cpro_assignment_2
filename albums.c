@@ -298,11 +298,13 @@ void listAlbums() {
         return;
     }
     
+    int count = 0;
     for (Album *a = g_albums; a; a = a->next) {
+        count++;
         int song_count = 0;
         for (AlbumNode *n = a->head; n; n = n->next) song_count++;
         
-        printf("%s (%d songs) [ID: %d]\n", a->name, song_count, a->album_id);
+        printf("%d. %s (%d songs) [ID: %d]\n", count, a->name, song_count, a->album_id);
     }
 }
 

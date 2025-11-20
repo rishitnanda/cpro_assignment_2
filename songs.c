@@ -386,15 +386,15 @@ void display_progress_bar() {
     
     printf("\r\033[K");
     
-    const char *symbol = g_playback.is_paused ? ">" : "||";
+    const char *symbol = g_playback.is_paused ? "▶" : "⏸";
     
     int bar_width = 30;
     int filled = (total > 0) ? (elapsed * bar_width / total) : 0;
     
     printf("%s [", symbol);
     for (int i = 0; i < bar_width; i++) {
-        if (i < filled) printf("=");
-        else printf("-");
+        if (i < filled) printf("█");
+        else printf("░");
     }
     printf("] %02d:%02d:%02d / %02d:%02d:%02d - %s",
            elapsed / 3600, (elapsed % 3600) / 60, elapsed % 60,
@@ -426,17 +426,17 @@ void playback_loop() {
         if (repeat_requested) {
             if (g_playback.repeat_mode == 1) {
                 g_playback.repeat_mode = 0;
-                printf("\nRepeat mode: OFF\n");
+                printf("\n⟲ Repeat mode: OFF\n");
             } else {
                 g_playback.repeat_mode = 1;
-                printf("\nRepeat mode: ON (current song will repeat once)\n");
+                printf("\n⟲ Repeat mode: ON (current song will repeat once)\n");
             }
             repeat_requested = 0;
         }
         
         if (loop_requested) {
             g_playback.repeat_mode = 2;
-            printf("\nLoop mode: ON (current song will repeat forever)\n");
+            printf("\n⟳ Loop mode: ON (current song will repeat forever)\n");
             loop_requested = 0;
         }
         
@@ -485,10 +485,10 @@ void playback_loop() {
                 if (g_playback.repeat_mode == 1) {
                     g_playback.elapsed_seconds = 0;
                     g_playback.repeat_mode = 0;
-                    printf("\nRepeating song once\n");
+                    printf("\n⟲ Repeating song once\n");
                 } else if (g_playback.repeat_mode == 2) {
                     g_playback.elapsed_seconds = 0;
-                    printf("\nLooping song\n");
+                    printf("\n⟳ Looping song\n");
                 } else {
                     if (g_playback.current->next && g_playback.current->next->song) {
                         g_playback.current = g_playback.current->next;
@@ -496,10 +496,10 @@ void playback_loop() {
                         g_playback.total_seconds = length_to_seconds(&g_playback.current->song->length);
                         
                         if (g_playback.current == g_playback.head) {
-                            printf("\nPlaylist wrapped to beginning\n");
+                            printf("\n🔄 Playlist wrapped to beginning\n");
                         }
                         
-                        printf("Now playing: %s\n", g_playback.current->song->title);
+                        printf("▶ Now playing: %s\n", g_playback.current->song->title);
                     }
                 }
             }
@@ -590,7 +590,7 @@ void nextSongs(const char *songs[], int count) {
     for (int i = 0; i < count; i++) {
         Song *s = find_song_by_title_interactive(songs[i]);
         if (!s) {
-            printf("  X %s - not found in library\n", songs[i]);
+            printf("  ✗ %s - not found in library\n", songs[i]);
             continue;
         }
         
@@ -606,7 +606,7 @@ void nextSongs(const char *songs[], int count) {
         }
         
         found_count++;
-        printf("  OK %s\n", s->title);
+        printf("  ✓ %s\n", s->title);
     }
     
     if (found_count > 0) {
